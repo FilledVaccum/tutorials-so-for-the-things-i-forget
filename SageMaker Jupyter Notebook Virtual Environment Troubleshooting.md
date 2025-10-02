@@ -30,13 +30,12 @@ print("Pip version:", subprocess.run(['pip', '--version'], capture_output=True, 
 ## Solution Applied
 
 ### Method 1: Use Python-specific pip (Recommended)
-``python
+```python
 import sys
 import subprocess
-```
 
 # Always use pip from the current Python environment
-```
+
 result = subprocess.run([sys.executable, '-m', 'pip', 'list'], capture_output=True, text=True)
 print(result.stdout)
 ```
