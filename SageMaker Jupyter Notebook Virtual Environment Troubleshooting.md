@@ -11,36 +11,38 @@ The notebook kernel was using the correct Python executable but had incorrect PA
 ## Diagnostic Commands
 
 ### Terminal Verification
-bash
+```bash
 which python
 which pip
 pip --version
-
+```
 
 ### Notebook Verification
-python
+```python
 import sys
 import subprocess
 
 print("Python:", sys.executable)
 print("Pip:", subprocess.run(['which', 'pip'], capture_output=True, text=True).stdout.strip())
 print("Pip version:", subprocess.run(['pip', '--version'], capture_output=True, text=True).stdout)
-
+```
 
 ## Solution Applied
 
 ### Method 1: Use Python-specific pip (Recommended)
-python
+``python
 import sys
 import subprocess
+```
 
 # Always use pip from the current Python environment
+```
 result = subprocess.run([sys.executable, '-m', 'pip', 'list'], capture_output=True, text=True)
 print(result.stdout)
-
+```
 
 ### Method 2: Fix PATH in notebook
-python
+```python
 import os
 import sys
 
@@ -49,19 +51,19 @@ env_bin = os.path.dirname(sys.executable)
 current_path = os.environ['PATH']
 if env_bin not in current_path:
     os.environ['PATH'] = f"{env_bin}:{current_path}"
-
+```
 
 ## How to Revert
 
 ### Revert PATH changes (if Method 2 was used)
-python
+```python
 import os
 
 # Reset PATH to original (restart kernel is easier)
 # Or manually remove the added path
 original_path = os.environ['PATH'].split(':', 1)[1]  # Remove first entry
 os.environ['PATH'] = original_path
-
+```
 
 ### Complete Reset
 • Restart the Jupyter kernel: Kernel → Restart
