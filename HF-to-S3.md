@@ -11,7 +11,7 @@ This tutorial shows how to download models from Hugging Face Hub and upload them
 ## Code 
 
 ```python
-ef main():
+def main():
     args = parse_args()
     hf_token = os.environ.get("HUGGING_FACE_HUB_TOKEN")
     if not hf_token:
