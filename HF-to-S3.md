@@ -8,6 +8,62 @@ This tutorial shows how to download models from Hugging Face Hub and upload them
 - Python 3.8+
 - Required Python packages (see installation below)
 
+## Code 
+
+```python
+ef main():
+    args = parse_args()
+    hf_token = os.environ.get("HUGGING_FACE_HUB_TOKEN")
+    if not hf_token:
+        raise RuntimeError("Please set HUGGING_FACE_HUB_TOKEN environment variable")
+
+    # Prepare boto3 S3 client with region
+    session = boto3.session.Session(region_name=args.region)
+    s3 = session.client("s3")
+
+    # Configure multipart transfer
+    chunk_bytes = args.chunk_size_mb * 1024 * 1024
+    transfer_config = TransferConfig(
+        multipart_threshold=chunk_bytes,
+        max_concurrency=args.workers,
+        multipart_chunksize=chunk_bytes,
+        use_threads=True
+    )
+
+    # List model files
+    list_url = f"https://huggingface.co/api/models/{args.model}"
+    resp = requests.get(
+        list_url,
+        headers={"Authorization": f"Bearer {hf_token}"}
+    )
+    resp.raise_for_status()
+    model_info = resp.json()
+    files = model_info.get("siblings", [])
+
+    def upload_file(file_info):
+        path = file_info["rfilename"]
+        download_url = f"https://huggingface.co/{args.model}/resolve/main/{path}"
+        s3_key = f"{args.prefix}/{path}"
+
+        with requests.get(download_url, headers={"Authorization": f"Bearer {hf_token}"}, stream=True) as r:
+            r.raise_for_status()
+            s3.upload_fileobj(
+                Fileobj=r.raw,
+                Bucket=args.bucket,
+                Key=s3_key,
+                ExtraArgs={"ACL": "bucket-owner-full-control"},
+                Config=transfer_config
+            )
+        print(f"Uploaded: s3://{args.bucket}/{s3_key}")
+
+    # Parallel upload
+    with ThreadPoolExecutor(max_workers=args.workers) as executor:
+        executor.map(upload_file, files)
+
+if __name__ == "__main__":
+    main()
+```
+
 ## Installation
 
 ```bash
